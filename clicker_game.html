@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klicker imperija</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --neon: #00dbde;
+  --mag: #fc00ff;
+  --gold: #ffd700;
+  --green: #00ff88;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background-size: 400% 400%;
+  animation: bgShift 18s ease infinite;
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+@keyframes bgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(0,219,222,0.12), transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(252,0,255,0.12), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+.header {
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 2px solid #4a4a8a;
+  margin-bottom: 20px;
+}
+.header h1 {
+  font-size: 2.5em;
+  background: linear-gradient(45deg, #00dbde, #fc00ff, #ffd700);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+.header p { color: #aaa; margin-top: 5px; }
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid #4a4a8a;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s;
+  font-size: 1em;
+}
+.tab:hover, .tab.active {
+  background: linear-gradient(45deg, #00dbde, #fc00ff);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(252,0,255,0.35);
+}
+.panel {
+  display: none;
+  background: rgba(255,255,255,0.05);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.panel.active { display: block; }
+.click-area { text-align: center; padding: 40px 20px; }
+.click-btn {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(145deg, #00dbde, #fc00ff);
+  color: #fff;
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.1s;
+  box-shadow: 0 10px 30px rgba(0,219,222,0.4);
+  position: relative;
+}
+.click-btn:hover { transform: scale(1.05); }
+.click-btn:active { transform: scale(0.95); }
+.click-btn.clicked { animation: pulse 0.3s; }
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.click-effect {
+  position: fixed;
+  pointer-events: none;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #fc0;
+  animation: floatUp 1s ease-out forwards;
+  z-index: 999;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+.stat-card {
+  background: rgba(255,255,255,0.08);
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 4px solid #00dbde;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,219,222,0.2); }
+.stat-card h3 { font-size: 0.9em; color: #aaa; margin-bottom: 5px; }
+.stat-card p { font-size: 1.4em; font-weight: bold; color: #00dbde; }
+.level-bar {
+  width: 100%;
+  height: 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+.level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00dbde, #fc00ff);
+  transition: width 0.3s;
+  border-radius: 10px;
+}
+.upgrade-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  border-left: 4px solid #fc00ff;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.upgrade-info h4 { color: #fc00ff; margin-bottom: 5px; }
+.upgrade-info p { font-size: 0.9em; color: #aaa; }
+.upgrade-btn {
+  padding: 10px 20px;
+  background: linear-gradient(45deg, #00dbde, #fc00ff);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.upgrade-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.upgrade-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.5; }
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  border-left: 4px solid #666;
+}
+.achievement-item.unlocked {
+  border-left-color: #ffd700;
+  background: rgba(255,215,0,0.1);
+}
+.achievement-icon { font-size: 2em; }
+.achievement-info h4 { color: #aaa; }
+.achievement-item.unlocked .achievement-info h4 { color: #ffd700; }
+.achievement-info p { font-size: 0.85em; color: #888; }
+.prestige-info { text-align: center; padding: 30px; }
+.prestige-btn {
+  padding: 15px 40px;
+  font-size: 1.2em;
+  background: linear-gradient(45deg, #ffd700, #ff6b6b);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 20px;
+}
+.prestige-btn:hover:not(:disabled) { transform: scale(1.05); }
+.prestige-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.5; }
+.combo-display {
+  text-align: center;
+  font-size: 1.2em;
+  color: #ff6b6b;
+  margin: 10px 0;
+  min-height: 30px;
+}
+.zone-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  border-left: 4px solid #00ff88;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.zone-item:hover { transform: translateX(5px); }
+.zone-item.locked { opacity: 0.5; cursor: not-allowed; }
+.zone-item.locked:hover { transform: none; }
+.zone-item.active { border-left-color: #ffd700; background: rgba(255,215,0,0.1); }
+.auto-clicker-display {
+  text-align: center;
+  padding: 10px;
+  background: rgba(0,255,136,0.1);
+  border-radius: 10px;
+  margin: 10px 0;
+  border: 1px solid rgba(0,255,136,0.3);
+}
+.crit-flash {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4em;
+  color: #ff0;
+  font-weight: bold;
+  pointer-events: none;
+  animation: critAnim 0.8s ease-out forwards;
+  z-index: 1000;
+  text-shadow: 0 0 20px #ff0, 0 0 40px #f80;
+}
+@keyframes critAnim {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(-50px); }
+}
+.save-controls {
+  text-align: center;
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.save-btn {
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid #4a4a8a;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.save-btn:hover { background: rgba(255,255,255,0.2); }
+.floating-text {
+  position: fixed;
+  pointer-events: none;
+  font-weight: bold;
+  animation: floatText 1.5s ease-out forwards;
+  z-index: 999;
+}
+@keyframes floatText {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-100px) scale(1.5); }
+}
+/* particle dots */
+.particle {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 998;
+  animation: spark 0.7s ease-out forwards;
+}
+@keyframes spark {
+  0% { opacity: 1; transform: translate(0,0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+}
+/* automation toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  border-left: 4px solid #00ff88;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.toggle-row h4 { color: #00ff88; }
+.toggle-row p { font-size: 0.85em; color: #aaa; flex-basis: 100%; }
+.switch { position: relative; width: 56px; height: 30px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: #555; border-radius: 30px; transition: 0.3s;
+}
+.slider::before {
+  content: ""; position: absolute; height: 22px; width: 22px;
+  left: 4px; bottom: 4px; background: #fff; border-radius: 50%; transition: 0.3s;
+}
+.switch input:checked + .slider { background: linear-gradient(45deg, #00dbde, #fc00ff); }
+.switch input:checked + .slider::before { transform: translateX(26px); }
+.panel h2 { margin-bottom: 15px; }
+.offline-modal {
+  position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.7); z-index: 2000; backdrop-filter: blur(4px);
+}
+.offline-modal.show { display: flex; animation: fadeIn 0.3s ease; }
+.offline-box {
+  background: linear-gradient(135deg, #1a1a3a, #2a2a5a);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 15px; padding: 30px; text-align: center; max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.offline-box h2 { color: #00dbde; margin-bottom: 10px; }
+.offline-box .amount { font-size: 2em; color: #ffd700; font-weight: bold; margin: 15px 0; }
+.offline-box button {
+  padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer;
+  background: linear-gradient(45deg, #00dbde, #fc00ff); color: #fff; font-weight: bold;
+}
+/* golden click event */
+.golden-click {
+  position: fixed;
+  width: 70px; height: 70px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff7c0, #ffd700 60%, #ff8a00);
+  box-shadow: 0 0 30px #ffd700, 0 0 60px #ff8a00;
+  cursor: pointer; z-index: 1500;
+  display: flex; align-items: center; justify-content: center; font-size: 2em;
+  animation: goldenFloat 2s ease-in-out infinite, goldenPulse 1.2s ease-in-out infinite;
+  user-select: none;
+}
+@keyframes goldenFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+@keyframes goldenPulse {
+  0%,100% { box-shadow: 0 0 30px #ffd700, 0 0 60px #ff8a00; }
+  50% { box-shadow: 0 0 50px #ffe600, 0 0 90px #ff8a00; }
+}
+/* frenzy banner */
+.frenzy-banner {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(45deg, #ff6b6b, #ffd700);
+  color: #1a1a2a; font-weight: bold; padding: 12px 28px; border-radius: 30px;
+  z-index: 1600; box-shadow: 0 8px 30px rgba(255,107,107,0.5);
+  animation: fadeIn 0.3s ease; font-size: 1.1em; white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .header h1 { font-size: 1.8em; }
+  .click-btn { width: 150px; height: 150px; font-size: 1.2em; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>⚡ Klicker Imperija ⚡</h1>
+    <p style="color:#aaa; margin-top:5px;">Surink Power, tobulink ir tampa didžiausiu!</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="main">🏠 Pagrindinis</button>
+    <button class="tab" data-tab="upgrades">⬆️ Tobulinimai</button>
+    <button class="tab" data-tab="automation">🤖 Automatika</button>
+    <button class="tab" data-tab="achievements">🏆 Pasiekimai</button>
+    <button class="tab" data-tab="stats">📈 Statistika</button>
+    <button class="tab" data-tab="prestige">⭐ Prestige</button>
+    <button class="tab" data-tab="zones">🗺️ Zonos</button>
+  </div>
+
+  <div id="main" class="panel active">
+    <div class="click-area">
+      <div class="combo-display" id="comboDisplay"></div>
+      <button class="click-btn" id="clickBtn">⚡ KLIKE!</button>
+      <div class="auto-clicker-display" id="autoClickerDisplay">Auto-klickeriai: 0/s</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>💎 Power</h3>
+        <p id="powerDisplay">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>📊 Lygis</h3>
+        <p id="levelDisplay">1</p>
+      </div>
+      <div class="stat-card">
+        <h3>🎯 XP</h3>
+        <p id="xpDisplay">0 / 100</p>
+      </div>
+      <div class="stat-card">
+        <h3>💥 Per click</h3>
+        <p id="perClickDisplay">1</p>
+      </div>
+      <div class="stat-card">
+        <h3>⚡ Per sek.</h3>
+        <p id="perSecDisplay">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>🔥 Combo</h3>
+        <p id="comboCount">0x</p>
+      </div>
+      <div class="stat-card">
+        <h3>⭐ Crit šansas</h3>
+        <p id="critChance">5%</p>
+      </div>
+      <div class="stat-card">
+        <h3>🤖 Bot klickai</h3>
+        <p id="botDisplay">0/s</p>
+      </div>
+      <div class="stat-card">
+        <h3>🏆 Viso pasiekimų</h3>
+        <p id="totalAchievements">0 / 0</p>
+      </div>
+    </div>
+    <div class="level-bar">
+      <div class="level-fill" id="levelFill" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <div id="upgrades" class="panel">
+    <h2 style="color:#fc00ff;">⬆️ Tobulinimai</h2>
+    <div id="upgradesList"></div>
+  </div>
+
+  <div id="automation" class="panel">
+    <h2 style="color:#00ff88;">🤖 Automatika & Auto-klickeriai</h2>
+    <p style="color:#aaa; margin-bottom:15px;">Įjunk automatinį klickinimą ir auto-pirkimą, kad progresas vyktų be tavo dalyvavimo!</p>
+    <div id="automationList"></div>
+  </div>
+
+  <div id="achievements" class="panel">
+    <h2 style="color:#ffd700;">🏆 Pasiekimai</h2>
+    <div id="achievementsList"></div>
+  </div>
+
+  <div id="stats" class="panel">
+    <h2 style="color:#00dbde;">📈 Statistika</h2>
+    <div class="stats-grid" id="statsGrid"></div>
+  </div>
+
+  <div id="prestige" class="panel">
+    <div class="prestige-info">
+      <h2 style="color:#ffd700;">⭐ Prestige Sistema</h2>
+      <p style="margin-top:15px; color:#aaa;">Prestige leidžia pradėti iš naujo su nuolatiniu bonusu!</p>
+      <p style="margin-top:10px; color:#ff6b6b;">Prieš resetinant pasirink lygį <span id="prestigeLevel">1</span></p>
+      <p style="margin-top:10px; color:#ffd700;">Gausi <span id="prestigePoints">0</span> Prestige taškų</p>
+      <p style="margin-top:5px; color:#aaa;">Kiekvienas taškas +5% visam Power</p>
+      <p style="margin-top:5px; color:#aaa;">Reikia bent 100 lygio</p>
+      <button class="prestige-btn" id="prestigeBtn" disabled>⭐ Prestige Reset</button>
+    </div>
+  </div>
+
+  <div id="zones" class="panel">
+    <h2 style="color:#00ff88;">🗺️ Zonos</h2>
+    <p style="color:#aaa; margin-bottom:15px;">Kiekviena zona turi savo unikalų bonusą!</p>
+    <div id="zonesList"></div>
+  </div>
+
+  <div class="save-controls">
+    <button class="save-btn" id="saveBtn">💾 Išsaugoti</button>
+    <button class="save-btn" id="resetBtn">🔄 Reset</button>
+  </div>
+</div>
+
+<div class="offline-modal" id="offlineModal">
+  <div class="offline-box">
+    <h2>💤 Geros naujienos!</h2>
+    <p>Kol tavęs nebuvo, tavo automatika dirbo:</p>
+    <div class="amount" id="offlineAmount">+0</div>
+    <p id="offlineTime" style="color:#aaa; font-size:0.85em;"></p>
+    <button id="offlineClose">Gerai!</button>
+  </div>
+</div>
+<script>
+const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  n = Math.floor(n);
+  if (n < 1000) return n.toString();
+  const tier = Math.floor(Math.log10(n) / 3);
+  if (tier >= SUFFIXES.length) return n.toExponential(2);
+  const scaled = n / Math.pow(1000, tier);
+  return scaled.toFixed(scaled < 10 ? 2 : scaled < 100 ? 1 : 0) + SUFFIXES[tier];
+}
+
+const Game = {
+  power: 0,
+  totalPower: 0,
+  totalClicks: 0,
+  level: 1,
+  xp: 0,
+  xpToNext: 100,
+  perClick: 1,
+  perSecond: 0,
+  combo: 0,
+  comboTimer: null,
+  critChance: 0.05,
+  critMultiplier: 3,
+  maxCrit: 0,
+  prestigePoints: 0,
+  totalPrestigePoints: 0,
+  currentZone: 0,
+  lastSave: Date.now(),
+  autoAccum: 0,
+  botAccum: 0,
+  botClicks: 0,
+
+  automation: {
+    autoClickBot: false,
+    botSpeedMs: 1000,
+    autoBuy: {},
+  },
+
+  frenzyMultiplier: 1,
+  frenzyUntil: 0,
+  goldenActive: false,
+  dailyStreak: 0,
+  lastDaily: null,
+
+  zones: [
+    { name: "🧊 Ledynas", desc: "Pradžia. +0% bonusų", bonus: 0, cost: 0, requiredLevel: 1 },
+    { name: "🌲 Miškas", desc: "+10% Power", bonus: 0.1, cost: 500, requiredLevel: 5 },
+    { name: "🏔️ Kalnas", desc: "+25% Power", bonus: 0.25, cost: 2000, requiredLevel: 10 },
+    { name: "🌋 Volcano", desc: "+50% Power + crit bonus", bonus: 0.5, cost: 1000000, requiredLevel: 20 },
+    { name: "🌌 Kosmosas", desc: "+100% Power + auto bonus", bonus: 1.0, cost: 50000000, requiredLevel: 35 },
+    { name: "⚡ Tarpdimensinė", desc: "+200% Power + kritai dažnesni", bonus: 2.0, cost: 2000000000, requiredLevel: 50 },
+  ],
+
+  upgrades: {
+    clickPower: { name: "💪 Klick galia", desc: "+1 per click", baseCost: 10, cost: 10, level: 0, multiplier: 1.5, type: "click" },
+    autoBot: { name: "🤖 Auto-klicker botas", desc: "Įjungia automatinį klickinimą", baseCost: 2500000, cost: 2500000, level: 0, multiplier: 2.0, type: "bot" },
+    autoDrone: { name: "🛸 Auto-dronas", desc: "+5/s automatiškai", baseCost: 150, cost: 150, level: 0, multiplier: 1.55, type: "auto", rate: 5 },
+    autoFactory: { name: "🏭 Auto-fabrikas", desc: "+25/s automatiškai", baseCost: 1500, cost: 1500, level: 0, multiplier: 1.6, type: "auto", rate: 25 },
+    autoLab: { name: "🔬 Auto-laboratorija", desc: "+150/s automatiškai", baseCost: 15000, cost: 15000, level: 0, multiplier: 1.65, type: "auto", rate: 150 },
+    autoNano: { name: "⚛️ Nano-reaktoriai", desc: "+1,000/s automatiškai", baseCost: 150000, cost: 150000, level: 0, multiplier: 1.7, type: "auto", rate: 1000 },
+    autoQuantum: { name: "🌟 Kvantinis branduolys", desc: "+10,000/s automatiškai", baseCost: 2000000, cost: 2000000, level: 0, multiplier: 1.75, type: "auto", rate: 10000 },
+    multiplier: { name: "🔮 Power daugiklis", desc: "+25% visam Power", baseCost: 200, cost: 200, level: 0, multiplier: 2.0, type: "mult" },
+    combo: { name: "🔥 Combo greitis", desc: "Combo lėtėja lėčiau", baseCost: 300, cost: 300, level: 0, multiplier: 1.8, type: "combo" },
+    crit: { name: "💥 Crit šansas", desc: "+2% crit šansas", baseCost: 500, cost: 500, level: 0, multiplier: 2.2, type: "crit" },
+    critDmg: { name: "🗡️ Crit žala", desc: "+1 crit daugiklis", baseCost: 3000, cost: 3000, level: 0, multiplier: 2.5, type: "critDmg" },
+    xpBoost: { name: "📚 XP Boost", desc: "+20% XP", baseCost: 400, cost: 400, level: 0, multiplier: 1.9, type: "xp" },
+  },
+
+  achievements: [
+    { id: "first_click", name: "Pirmas žingsnis", desc: "Atlik pirmąjį click", icon: "👆", check: () => Game.totalClicks >= 1, reward: 0 },
+    { id: "clicks_100", name: "Greitasis", desc: "Atlik 100 klickų", icon: "⚡", check: () => Game.totalClicks >= 100, reward: 0 },
+    { id: "clicks_10000", name: "Klick mašina", desc: "Atlik 10,000 klickų", icon: "🤖", check: () => Game.totalClicks >= 10000, reward: 0 },
+    { id: "power_100", name: "Energijos turėtojas", desc: "Surink 100 Power", icon: "⚡", check: () => Game.totalPower >= 100, reward: 0 },
+    { id: "power_1000", name: "Energijos magnatas", desc: "Surink 1,000 Power", icon: "💎", check: () => Game.totalPower >= 1000, reward: 0 },
+    { id: "power_1M", name: "Energijos milžinas", desc: "Surink 1M Power", icon: "🏆", check: () => Game.totalPower >= 1e6, reward: 0 },
+    { id: "power_1B", name: "Energijos dievas", desc: "Surink 1B Power", icon: "👑", check: () => Game.totalPower >= 1e9, reward: 0 },
+    { id: "level_10", name: "Patyręs", desc: "Pasiek 10 lygį", icon: "📈", check: () => Game.level >= 10, reward: 0 },
+    { id: "level_25", name: "Meistras", desc: "Pasiek 25 lygį", icon: "🎓", check: () => Game.level >= 25, reward: 0 },
+    { id: "level_50", name: "Legenda", desc: "Pasiek 50 lygį", icon: "🌟", check: () => Game.level >= 50, reward: 0 },
+    { id: "combo_10", name: "Combo karalius", desc: "Pasiek 10x combo", icon: "🔥", check: () => Game.combo >= 10, reward: 0 },
+    { id: "combo_50", name: "Combo legenda", desc: "Pasiek 50x combo", icon: "🌋", check: () => Game.combo >= 50, reward: 0 },
+    { id: "upgrade_10", name: "Tobulinėtojas", desc: "Įsigyk 10 tobulinimų", icon: "⬆️", check: () => getTotalUpgrades() >= 10, reward: 0 },
+    { id: "upgrade_50", name: "Tobulinimų meistras", desc: "Įsigyk 50 tobulinimų", icon: "🏅", check: () => getTotalUpgrades() >= 50, reward: 0 },
+    { id: "crit_master", name: "Crit meistras", desc: "Turėk 25% crit šansą", icon: "💥", check: () => Game.critChance >= 0.25, reward: 0 },
+    { id: "prestige_1", name: "Prestige pradžia", desc: "Atlik pirmąjį prestige", icon: "⭐", check: () => Game.totalPrestigePoints >= 1, reward: 0 },
+    { id: "zone_3", name: "Kelionė į viršų", desc: "Atrakink 3 zonas", icon: "🗺️", check: () => getUnlockedZones() >= 3, reward: 0 },
+    { id: "auto_50", name: "Automatinis milžinas", desc: "Turėk 50/s automatiškai", icon: "🤖", check: () => Game.getEffectivePerSecond() >= 50, reward: 0 },
+    { id: "auto_10000", name: "Automatizacijos dievas", desc: "Turėk 10,000/s automatiškai", icon: "🌟", check: () => Game.getEffectivePerSecond() >= 10000, reward: 0 },
+    { id: "click_100", name: "Klick greitasis", desc: "Turėk 100 per click", icon: "⚡", check: () => Game.getEffectivePower() >= 100, reward: 0 },
+    { id: "crit_1M", name: "Milžiniškas crit", desc: "Gauk 1M per vieną crit", icon: "💥", check: () => Game.maxCrit >= 1e6, reward: 0 },
+  ],
+
+  unlockedAchievements: {},
+
+  init() {
+    for (let key in this.upgrades) this.automation.autoBuy[key] = false;
+    this.load();
+    this.setupEventListeners();
+    this.renderUpgrades();
+    this.renderAchievements();
+    this.renderZones();
+    this.renderAutomation();
+    this.startAutoSave();
+    this.botLoop();
+    this.gameLoop();
+    this.checkDaily();
+    this.startEvents();
+  },
+  setupEventListeners() {
+    document.getElementById('clickBtn').addEventListener('click', (e) => this.click(e));
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'stats') this.renderStats();
+      });
+    });
+    document.getElementById('saveBtn').addEventListener('click', () => this.save());
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('Ar tikrai nori resetinti visą progresą?')) {
+        localStorage.removeItem('clickerGame');
+        location.reload();
+      }
+    });
+    document.getElementById('prestigeBtn').addEventListener('click', () => this.doPrestige());
+    document.getElementById('offlineClose').addEventListener('click', () => {
+      document.getElementById('offlineModal').classList.remove('show');
+    });
+  },
+
+  click(e) {
+    let power = this.getEffectivePower();
+    let isCrit = Math.random() < this.critChance;
+
+    if (isCrit) {
+      power *= this.critMultiplier;
+      this.showCrit();
+      if (power > this.maxCrit) this.maxCrit = power;
+    }
+
+    this.power += power;
+    this.totalPower += power;
+    this.totalClicks++;
+    this.xp += Math.floor(power * (1 + 0.2 * this.upgrades.xpBoost.level));
+
+    this.combo++;
+    this.updateCombo();
+
+    clearTimeout(this.comboTimer);
+    this.comboTimer = setTimeout(() => {
+      this.combo = 0;
+      this.updateCombo();
+    }, 2000 - Math.min(this.upgrades.combo.level * 100, 1500));
+
+    this.showClickEffect(e, power, isCrit);
+    this.spawnParticles(e);
+    this.checkLevelUp();
+    this.updateDisplay();
+  },
+
+  botClick() {
+    let power = this.getEffectivePower();
+    let isCrit = Math.random() < this.critChance;
+    if (isCrit) {
+      power *= this.critMultiplier;
+      if (power > this.maxCrit) this.maxCrit = power;
+    }
+    this.power += power;
+    this.totalPower += power;
+    this.totalClicks++;
+    this.xp += Math.floor(power * (1 + 0.2 * this.upgrades.xpBoost.level));
+    this.combo++;
+    this.updateCombo();
+    clearTimeout(this.comboTimer);
+    this.comboTimer = setTimeout(() => {
+      this.combo = 0;
+      this.updateCombo();
+    }, 2000 - Math.min(this.upgrades.combo.level * 100, 1500));
+    this.checkLevelUp();
+  },
+
+  getEffectivePower() {
+    let base = this.perClick;
+    let comboBonus = 1 + this.combo * 0.1;
+    let multBonus = 1 + this.upgrades.multiplier.level * 0.25;
+    let zoneBonus = 1 + this.zones[this.currentZone].bonus;
+    let prestigeBonus = 1 + this.totalPrestigePoints * 0.05;
+    let frenzy = this.frenzyUntil > Date.now() ? this.frenzyMultiplier : 1;
+    return Math.floor(base * comboBonus * multBonus * zoneBonus * prestigeBonus * frenzy);
+  },
+
+  getEffectivePerSecond() {
+    let base = this.perSecond;
+    let multBonus = 1 + this.upgrades.multiplier.level * 0.25;
+    let zoneBonus = 1 + this.zones[this.currentZone].bonus;
+    let prestigeBonus = 1 + this.totalPrestigePoints * 0.05;
+    let frenzy = this.frenzyUntil > Date.now() ? this.frenzyMultiplier : 1;
+    return Math.floor(base * multBonus * zoneBonus * prestigeBonus * frenzy);
+  },
+
+  showClickEffect(e, power, isCrit) {
+    const effect = document.createElement('div');
+    effect.className = 'click-effect';
+    effect.textContent = `+${fmt(power)}${isCrit ? ' 💥' : ''}`;
+    effect.style.left = e.clientX + 'px';
+    effect.style.top = e.clientY + 'px';
+    document.body.appendChild(effect);
+    setTimeout(() => effect.remove(), 1000);
+  },
+
+  spawnParticles(e) {
+    for (let i = 0; i < 6; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 4 + Math.random() * 6;
+      p.style.width = p.style.height = size + 'px';
+      p.style.left = e.clientX + 'px';
+      p.style.top = e.clientY + 'px';
+      p.style.background = Math.random() < 0.5 ? '#00dbde' : '#fc00ff';
+      p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+      p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 700);
+    }
+  },
+
+  showCrit() {
+    const flash = document.createElement('div');
+    flash.className = 'crit-flash';
+    flash.textContent = '💥 CRIT! 💥';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 800);
+  },
+
+  updateCombo() {
+    const display = document.getElementById('comboDisplay');
+    document.getElementById('comboCount').textContent = this.combo + 'x';
+    if (this.combo > 0) {
+      display.textContent = `🔥 Combo: ${this.combo}x (+${Math.floor(this.combo * 10)}%)`;
+    } else {
+      display.textContent = '';
+    }
+  },
+
+  checkLevelUp() {
+    let leveled = false;
+    while (this.xp >= this.xpToNext) {
+      this.xp -= this.xpToNext;
+      this.level++;
+      this.xpToNext = Math.floor(this.xpToNext * 1.5);
+      leveled = true;
+      this.showFloatingText(`🎉 Lygis ${this.level}!`, window.innerWidth / 2, window.innerHeight / 3, '#ffd700');
+    }
+    if (leveled) {
+      this.renderZones();
+      this.renderAutomation();
+    }
+  },
+
+  showFloatingText(text, x, y, color) {
+    const el = document.createElement('div');
+    el.className = 'floating-text';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.color = color;
+    el.style.fontSize = '2em';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  },
+
+  botLoop() {
+    setInterval(() => {
+      if (this.automation.autoClickBot && this.upgrades.autoBot.level > 0) {
+        this.botClick();
+        this.botClicks++;
+        this.updateDisplay();
+      }
+    }, this.automation.botSpeedMs);
+  },
+
+  gameLoop() {
+    setInterval(() => {
+      if (this.perSecond > 0) {
+        this.autoAccum += this.getEffectivePerSecond() * 0.1;
+        let addPower = Math.floor(this.autoAccum);
+        this.autoAccum -= addPower;
+        this.power += addPower;
+        this.totalPower += addPower;
+        this.xp += Math.floor(addPower * (1 + 0.2 * this.upgrades.xpBoost.level));
+        this.checkLevelUp();
+      }
+      this.autoBuyUpgrades();
+      this.updateDisplay();
+      this.checkAchievements();
+      this.updatePrestigeButton();
+      this.refreshZones();
+      this.updateFrenzyBanner();
+    }, 100);
+  },
+
+  autoBuyUpgrades() {
+    for (let key in this.upgrades) {
+      if (this.automation.autoBuy[key] && this.power >= this.upgrades[key].cost) {
+        this.buyUpgrade(key);
+      }
+    }
+  },
+
+  updateDisplay() {
+    document.getElementById('powerDisplay').textContent = fmt(this.power);
+    document.getElementById('levelDisplay').textContent = this.level;
+    document.getElementById('xpDisplay').textContent = `${fmt(this.xp)} / ${fmt(this.xpToNext)}`;
+    document.getElementById('perClickDisplay').textContent = fmt(this.getEffectivePower());
+    document.getElementById('perSecDisplay').textContent = fmt(this.getEffectivePerSecond());
+    document.getElementById('autoClickerDisplay').textContent = `Auto-klickeriai: ${fmt(this.getEffectivePerSecond())}/s`;
+    document.getElementById('critChance').textContent = Math.floor(this.critChance * 100) + '%';
+    document.getElementById('botDisplay').textContent =
+      (this.automation.autoClickBot && this.upgrades.autoBot.level > 0) ? fmt(this.getEffectivePower()) + '/s' : '0/s';
+
+    let unlocked = 0;
+    for (let key in this.unlockedAchievements) {
+      if (this.unlockedAchievements[key]) unlocked++;
+    }
+    document.getElementById('totalAchievements').textContent = `${unlocked} / ${this.achievements.length}`;
+
+    let xpPercent = (this.xp / this.xpToNext) * 100;
+    document.getElementById('levelFill').style.width = xpPercent + '%';
+
+    this.refreshUpgradeButtons();
+  },
+
+  renderUpgrades() {
+    const list = document.getElementById('upgradesList');
+    list.innerHTML = '';
+    for (let key in this.upgrades) {
+      const u = this.upgrades[key];
+      const botOwned = u.type === 'bot' && u.level > 0;
+      const canBuy = this.power >= u.cost && !botOwned;
+      const div = document.createElement('div');
+      div.className = 'upgrade-item';
+      const extra = u.type === 'auto' ? ` (+${fmt(u.rate)}/s)` : '';
+      const owned = botOwned ? ' ✅' : '';
+      div.innerHTML = `
+        <div class="upgrade-info">
+          <h4>${u.name} (Lvl ${u.level})${owned}</h4>
+          <p>${u.desc}${extra}</p>
+          <p style="color:#00dbde; font-size:0.85em;">Kaina: ${fmt(u.cost)} Power</p>
+        </div>
+        <button class="upgrade-btn" data-key="${key}" ${canBuy ? '' : 'disabled'}>${botOwned ? 'Nupirkta' : 'Pirkti'}</button>
+      `;
+      list.appendChild(div);
+    }
+    list.querySelectorAll('.upgrade-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.buyUpgrade(btn.dataset.key));
+    });
+  },
+
+  refreshUpgradeButtons() {
+    for (let key in this.upgrades) {
+      const u = this.upgrades[key];
+      const botOwned = u.type === 'bot' && u.level > 0;
+      const btn = document.querySelector(`.upgrade-btn[data-key="${key}"]`);
+      if (btn) {
+        btn.disabled = this.power < u.cost || botOwned;
+        if (botOwned) btn.textContent = 'Nupirkta';
+      }
+    }
+  },
+
+  refreshZones() {
+    const list = document.getElementById('zonesList');
+    if (!list) return;
+    this.zones.forEach((z, i) => {
+      const item = list.children[i];
+      if (!item) return;
+      const locked = this.level < z.requiredLevel;
+      const owned = this.currentZone === i;
+      item.className = 'zone-item' + (locked ? ' locked' : '') + (owned ? ' active' : '');
+    });
+  },
+
+  buyUpgrade(key) {
+    const u = this.upgrades[key];
+    if (this.power >= u.cost) {
+      this.power -= u.cost;
+      u.level++;
+      u.cost = Math.floor(u.baseCost * Math.pow(u.multiplier, u.level));
+
+      if (u.type === 'click') this.perClick++;
+      if (u.type === 'auto') this.perSecond += u.rate;
+      if (u.type === 'crit') this.critChance += 0.02;
+      if (u.type === 'critDmg') this.critMultiplier += 1;
+      if (u.type === 'bot') this.automation.autoClickBot = true;
+
+      this.renderUpgrades();
+      this.renderAutomation();
+      this.updateDisplay();
+    }
+  },
+
+  renderAutomation() {
+    const list = document.getElementById('automationList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const botOwned = this.upgrades.autoBot.level > 0;
+    const botRow = document.createElement('div');
+    botRow.className = 'toggle-row';
+    botRow.innerHTML = `
+      <h4>🤖 Auto-klicker botas</h4>
+      <label class="switch">
+        <input type="checkbox" id="botToggle" ${this.automation.autoClickBot ? 'checked' : ''} ${botOwned ? '' : 'disabled'}>
+        <span class="slider"></span>
+      </label>
+      <p>${botOwned ? 'Botas automatiškai klickina kas ' + this.automation.botSpeedMs + 'ms (kaupia combo).' : 'Pirma įsigyk "Auto-klicker botas" tobulinimų skirtuke.'}</p>
+    `;
+    list.appendChild(botRow);
+    const botToggle = botRow.querySelector('#botToggle');
+    botToggle.addEventListener('change', () => {
+      this.automation.autoClickBot = botToggle.checked;
+    });
+    if (botOwned) {
+      const speedRow = document.createElement('div');
+      speedRow.className = 'toggle-row';
+      speedRow.innerHTML = `
+        <h4>⚡ Boto greitis: ${this.automation.botSpeedMs}ms</h4>
+        <input type="range" id="botSpeed" min="100" max="2000" step="100" value="${this.automation.botSpeedMs}" style="flex:1;">
+        <p>Mažiau ms = dažniau klickina (daugiau combo, bet lėtesnis progresas per klicką).</p>
+      `;
+      list.appendChild(speedRow);
+      speedRow.querySelector('#botSpeed').addEventListener('input', (e) => {
+        this.automation.botSpeedMs = parseInt(e.target.value);
+        speedRow.querySelector('h4').textContent = `⚡ Boto greitis: ${this.automation.botSpeedMs}ms`;
+      });
+    }
+
+    const header = document.createElement('h3');
+    header.style.cssText = 'color:#00ff88; margin:15px 0 10px;';
+    header.textContent = '🔄 Auto-pirkimas (automatiškai perka tobulinimus, kai užteks Power)';
+    list.appendChild(header);
+
+    for (let key in this.upgrades) {
+      const u = this.upgrades[key];
+      if (u.type === 'bot') continue;
+      const row = document.createElement('div');
+      row.className = 'toggle-row';
+      row.innerHTML = `
+        <h4>${u.name}</h4>
+        <label class="switch">
+          <input type="checkbox" data-key="${key}" ${this.automation.autoBuy[key] ? 'checked' : ''}>
+          <span class="slider"></span>
+        </label>
+        <p>${u.desc}</p>
+      `;
+      list.appendChild(row);
+      row.querySelector('input').addEventListener('change', (e) => {
+        this.automation.autoBuy[key] = e.target.checked;
+      });
+    }
+  },
+
+  renderAchievements() {
+    const list = document.getElementById('achievementsList');
+    list.innerHTML = '';
+    this.achievements.forEach(a => {
+      const unlocked = this.unlockedAchievements[a.id];
+      const div = document.createElement('div');
+      div.className = 'achievement-item' + (unlocked ? ' unlocked' : '');
+      div.innerHTML = `
+        <div class="achievement-icon">${a.icon}</div>
+        <div class="achievement-info">
+          <h4>${a.name} ${unlocked ? '✅' : '🔒'}</h4>
+          <p>${a.desc}</p>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  },
+
+  checkAchievements() {
+    let changed = false;
+    this.achievements.forEach(a => {
+      if (!this.unlockedAchievements[a.id] && a.check()) {
+        this.unlockedAchievements[a.id] = true;
+        this.showFloatingText(`🏆 ${a.name}!`, window.innerWidth / 2, window.innerHeight / 2, '#ffd700');
+        changed = true;
+      }
+    });
+    if (changed) this.renderAchievements();
+  },
+
+  renderZones() {
+    const list = document.getElementById('zonesList');
+    list.innerHTML = '';
+    this.zones.forEach((z, i) => {
+      const locked = this.level < z.requiredLevel;
+      const owned = this.currentZone === i;
+      const div = document.createElement('div');
+      div.className = 'zone-item' + (locked ? ' locked' : '') + (owned ? ' active' : '');
+      div.innerHTML = `
+        <h4>${z.name} ${owned ? '✅' : ''}</h4>
+        <p>${z.desc}</p>
+        <p style="color:#aaa; font-size:0.85em;">Reikia: ${z.requiredLevel} lygio | Kaina: ${fmt(z.cost)} Power</p>
+      `;
+      div.addEventListener('click', () => this.buyZone(i));
+      list.appendChild(div);
+    });
+  },
+
+  buyZone(index) {
+    const z = this.zones[index];
+    if (this.power >= z.cost && this.level >= z.requiredLevel && this.currentZone !== index) {
+      this.power -= z.cost;
+      this.currentZone = index;
+      this.renderZones();
+      this.updateDisplay();
+      this.showFloatingText(`🗺️ Atrakinta ${z.name}!`, window.innerWidth / 2, window.innerHeight / 2, '#00ff88');
+    }
+  },
+
+  renderStats() {
+    const grid = document.getElementById('statsGrid');
+    if (!grid) return;
+    const data = [
+      ['💎 Power', fmt(this.power)],
+      ['📊 Lygis', this.level],
+      ['🖱️ Viso klickų', fmt(this.totalClicks)],
+      ['💥 Per click', fmt(this.getEffectivePower())],
+      ['⚡ Per sekundę', fmt(this.getEffectivePerSecond())],
+      ['⭐ Crit šansa', Math.floor(this.critChance * 100) + '%'],
+      ['🗡️ Crit daugiklis', 'x' + this.critMultiplier],
+      ['⭐ Prestige taškai', this.totalPrestigePoints],
+      ['🌐 Dabartinė zona', this.zones[this.currentZone].name],
+      ['🏆 Pasiekimai', `${Object.values(this.unlockedAchievements).filter(Boolean).length} / ${this.achievements.length}`],
+      ['💥 Didž. crit', fmt(this.maxCrit)],
+      ['🤖 Bot aktyvus', this.automation.autoClickBot ? 'Taip' : 'Ne'],
+    ];
+    grid.innerHTML = '';
+    data.forEach(([label, val]) => {
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      card.innerHTML = `<h3>${label}</h3><p>${val}</p>`;
+      grid.appendChild(card);
+    });
+  },
+
+  updatePrestigeButton() {
+    const canPrestige = this.level >= 100;
+    const points = Math.floor(this.level / 10);
+    document.getElementById('prestigeBtn').disabled = !canPrestige;
+    document.getElementById('prestigeLevel').textContent = this.level;
+    document.getElementById('prestigePoints').textContent = points;
+  },
+
+  doPrestige() {
+    if (this.level < 100) return;
+    const points = Math.floor(this.level / 10);
+    this.totalPrestigePoints += points;
+    this.power = 0;
+    this.totalPower = 0;
+    this.totalClicks = 0;
+    this.level = 1;
+    this.xp = 0;
+    this.xpToNext = 100;
+    this.perClick = 1;
+    this.perSecond = 0;
+    this.combo = 0;
+    this.critChance = 0.05;
+    this.critMultiplier = 3;
+    this.maxCrit = 0;
+    this.currentZone = 0;
+    this.autoAccum = 0;
+    this.botAccum = 0;
+    this.botClicks = 0;
+    this.automation.autoClickBot = false;
+    for (let key in this.upgrades) {
+      const u = this.upgrades[key];
+      u.level = 0;
+      u.cost = u.baseCost;
+      this.automation.autoBuy[key] = false;
+    }
+    this.save();
+    location.reload();
+  },
+
+  save() {
+    const data = {
+      power: this.power,
+      totalPower: this.totalPower,
+      totalClicks: this.totalClicks,
+      level: this.level,
+      xp: this.xp,
+      xpToNext: this.xpToNext,
+      perClick: this.perClick,
+      perSecond: this.perSecond,
+      combo: this.combo,
+      critChance: this.critChance,
+      critMultiplier: this.critMultiplier,
+      maxCrit: this.maxCrit,
+      prestigePoints: this.prestigePoints,
+      totalPrestigePoints: this.totalPrestigePoints,
+      currentZone: this.currentZone,
+      lastSave: Date.now(),
+      autoAccum: this.autoAccum,
+      botAccum: this.botAccum,
+      dailyStreak: this.dailyStreak,
+      lastDaily: this.lastDaily,
+      automation: this.automation,
+      upgrades: {},
+      unlockedAchievements: this.unlockedAchievements,
+    };
+    for (let key in this.upgrades) {
+      data.upgrades[key] = { level: this.upgrades[key].level, cost: this.upgrades[key].cost };
+    }
+    localStorage.setItem('clickerGame', JSON.stringify(data));
+    this.showFloatingText('💾 Išsaugota!', window.innerWidth / 2, 100, '#00dbde');
+  },
+
+  load() {
+    const data = localStorage.getItem('clickerGame');
+    if (data) {
+      const parsed = JSON.parse(data);
+      Object.assign(this, parsed);
+      for (let key in parsed.upgrades) {
+        Object.assign(this.upgrades[key], parsed.upgrades[key]);
+      }
+      if (parsed.automation) {
+        Object.assign(this.automation, parsed.automation);
+        if (parsed.automation.autoBuy) {
+          for (let key in this.upgrades) {
+            this.automation.autoBuy[key] = !!parsed.automation.autoBuy[key];
+          }
+        }
+      }
+      const offline = this.calculateOffline();
+      if (offline && offline.power > 0) {
+        this.power += offline.power;
+        this.totalPower += offline.power;
+        this.showOfflineModal(offline);
+      }
+    }
+  },
+
+  calculateOffline() {
+    const now = Date.now();
+    const diff = (now - this.lastSave) / 1000;
+    if (diff < 10 || this.getEffectivePerSecond() <= 0) return null;
+    const maxOffline = 8 * 60 * 60;
+    const effectiveTime = Math.min(diff, maxOffline);
+    const power = Math.floor(this.getEffectivePerSecond() * effectiveTime);
+    return { power, seconds: effectiveTime };
+  },
+
+  showOfflineModal(offline) {
+    document.getElementById('offlineAmount').textContent = '+' + fmt(offline.power);
+    const h = Math.floor(offline.seconds / 3600);
+    const m = Math.floor((offline.seconds % 3600) / 60);
+    const s = Math.floor(offline.seconds % 60);
+    document.getElementById('offlineTime').textContent = `Neprisijungęs: ${h}val ${m}min ${s}s`;
+    document.getElementById('offlineModal').classList.add('show');
+  },
+
+  startEvents() {
+    const scheduleGolden = () => {
+      const delay = 45000 + Math.random() * 75000;
+      setTimeout(() => {
+        this.spawnGoldenClick();
+        scheduleGolden();
+      }, delay);
+    };
+    const scheduleFrenzy = () => {
+      const delay = 60000 + Math.random() * 120000;
+      setTimeout(() => {
+        this.triggerFrenzy();
+        scheduleFrenzy();
+      }, delay);
+    };
+    scheduleGolden();
+    scheduleFrenzy();
+  },
+
+  spawnGoldenClick() {
+    if (this.goldenActive) return;
+    this.goldenActive = true;
+    const el = document.createElement('div');
+    el.className = 'golden-click';
+    el.textContent = '🌟';
+    el.style.left = (window.innerWidth / 2 - 35 + (Math.random() * 200 - 100)) + 'px';
+    el.style.top = (window.innerHeight / 2 - 35 + (Math.random() * 150 - 75)) + 'px';
+    document.body.appendChild(el);
+    const remove = () => {
+      if (el.parentNode) el.remove();
+      this.goldenActive = false;
+    };
+    el.addEventListener('click', () => {
+      const bonus = Math.floor(this.getEffectivePower() * (15 + Math.random() * 45));
+      this.power += bonus;
+      this.totalPower += bonus;
+      this.xp += Math.floor(bonus * (1 + 0.2 * this.upgrades.xpBoost.level));
+      this.showFloatingText(`🌟 AUKSINIS +${fmt(bonus)}!`, window.innerWidth / 2, window.innerHeight / 2, '#ffd700');
+      this.spawnParticles({ clientX: parseFloat(el.style.left), clientY: parseFloat(el.style.top) });
+      remove();
+      this.updateDisplay();
+    });
+    setTimeout(() => { if (this.goldenActive) remove(); }, 10000);
+  },
+
+  triggerFrenzy() {
+    if (this.frenzyUntil > Date.now()) return;
+    this.frenzyMultiplier = 2 + Math.floor(Math.random() * 6);
+    this.frenzyUntil = Date.now() + (15000 + Math.random() * 15000);
+    this.showFloatingText(`🔥 ĮNIRŠIS x${this.frenzyMultiplier}!`, window.innerWidth / 2, window.innerHeight / 3, '#ff6b6b');
+    this.updateFrenzyBanner();
+  },
+
+  updateFrenzyBanner() {
+    let banner = document.getElementById('frenzyBanner');
+    const active = this.frenzyUntil > Date.now();
+    if (active) {
+      const secs = Math.ceil((this.frenzyUntil - Date.now()) / 1000);
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'frenzyBanner';
+        banner.className = 'frenzy-banner';
+        document.body.appendChild(banner);
+      }
+      banner.textContent = `🔥 ĮNIRŠIS x${this.frenzyMultiplier} — ${secs}s`;
+    } else if (banner) {
+      banner.remove();
+    }
+  },
+
+  checkDaily() {
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    if (this.lastDaily === today) return;
+    if (this.lastDaily === yesterday) this.dailyStreak++;
+    else this.dailyStreak = 1;
+    this.lastDaily = today;
+    const base = Math.max(100, this.getEffectivePerSecond() * 60);
+    const bonus = Math.floor(base * this.dailyStreak);
+    this.power += bonus;
+    this.totalPower += bonus;
+    setTimeout(() => {
+      this.showFloatingText(`🎁 Kasdieninis bonusas +${fmt(bonus)} (streak ${this.dailyStreak})`, window.innerWidth / 2, window.innerHeight / 2, '#ffd700');
+    }, 600);
+    this.updateDisplay();
+  },
+
+  startAutoSave() {
+    setInterval(() => this.save(), 30000);
+  },
+};
+
+function getTotalUpgrades() {
+  let total = 0;
+  for (let key in Game.upgrades) total += Game.upgrades[key].level;
+  return total;
+}
+
+function getUnlockedZones() {
+  let count = 0;
+  Game.zones.forEach((z, i) => { if (Game.level >= z.requiredLevel) count++; });
+  return count;
+}
+
+Game.init();
+</script>
+</body>
+</html>
+
+
